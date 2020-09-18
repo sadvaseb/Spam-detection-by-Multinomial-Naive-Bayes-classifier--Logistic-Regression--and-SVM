@@ -1,7 +1,7 @@
 # Spam detection by Multinomial Naive Bayes classifier, Logistic Regression, and SVM
  This project develops some algorithms to identify spam emails from non-spam emails in a dataset. I use multiple models (e.i., Naive Bayes classifier, Logistic Regression, and SVM). I applied multiple feature engineering technics (e.g., Count Vectorizer, Tfidf Vectorizer, and adding document length, non-word characters, etc) to improve accuracy. The highest spam detection accuracy **(AUC=98%)** is achieved by a multi-feature Logistic Regression model.
 
-This project is part of Applied Data Science with Python Specialization program at the University of Michigan. The program available from [here](https://www.coursera.org/learn/python-text-mining) .
+This project is part of Applied Data Science with Python Specialization program at the University of Michigan. The program available from [here](https://www.coursera.org/learn/python-text-mining) . This code is only uploaded for educational purposes and it should not be used for submitting any homework or assignment.
 
 I start with loading the dataset and dividing it to test and train datasets.
 
@@ -147,8 +147,8 @@ normal = spam_data[spam_data['target']== 0]
 
 I fit and transform the training data X_train using a Tfidf Vectorizer. The Tfidf Vectorizer ignores terms that have a document frequency strictly lower than 5 and using word n-grams from n=1 to n=3 (unigrams, bigrams, and trigrams). I also added two new features to document-term matrix:
 
-    the length of document (number of characters)
-    number of digits per document
+1) the length of document (number of characters)
+2) number of digits per document
 
 Then, I fit a Logistic Regression model with regularization C=100 and compute the area under the curve (AUC) score using the transformed test data.
 
@@ -192,9 +192,9 @@ Character n-grams creates character n-grams only from text inside word boundarie
 
 Then, I add three new features to the document-term matrix:
 
-    the length of document (number of characters)
-    number of digits per document
-    number of non-word characters (anything other than a letter, digit or underscore.)
+1) the length of document (number of characters)
+2) number of digits per document
+3) number of non-word characters (anything other than a letter, digit or underscore.)
 
 I used a Logistic Regression model with regularization C=100 and compute the area under the curve (AUC) score using the transformed test data.
 
