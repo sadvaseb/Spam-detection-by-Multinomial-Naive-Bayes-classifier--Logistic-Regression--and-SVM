@@ -1,0 +1,2 @@
+# Spam-detection-by-Multinomial-Naive-Bayes-classifier--Logistic-Regression--and-SVM
+ This project develops some algorithms to identify spam emails from non-spam emails in a dataset. I use multiple models (e.i., Naive Bayes classifier, Logistic Regression, and SVM). I applied multiple feature engineering technics (e.g., Count Vectorizer, Tfidf Vectorizer, and adding document length, non-word characters, etc) to improve accuracy. The highest spam detection accuracy **(AUC=98%)** is achieved by a multi-feature Logistic Regression model.
