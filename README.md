@@ -9,12 +9,91 @@ I start with loading the dataset and dividing it to test and train datasets.
 import pandas as pd
 import numpy as np
 
-spam_data = pd.read_csv('spam.csv')
+def read_data():
+    spam_data = pd.read_csv('spam.csv')
+    spam_data['target'] = np.where(spam_data['target']=='spam',1,0)
+    return(spam_data)
 
-spam_data['target'] = np.where(spam_data['target']=='spam',1,0)
+spam_data = read_data()
 spam_data.head(10)
-
 ```
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>text</th>
+      <th>target</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Go until jurong point, crazy.. Available only ...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Ok lar... Joking wif u oni...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Free entry in 2 a wkly comp to win FA Cup fina...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>U dun say so early hor... U c already then say...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Nah I don't think he goes to usf, he lives aro...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>FreeMsg Hey there darling it's been 3 week's n...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Even my brother is not like to speak with me. ...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>As per your request 'Melle Melle (Oru Minnamin...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>WINNER!! As a valued network customer you have...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Had your mobile 11 months or more? U R entitle...</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -32,16 +111,34 @@ spam_data['target'].mean()*100
 
 ```
 
+
+
+
+    13.406317300789663
+
+
+
 Fitting the training data X_train using a Count Vectorizer with default parameters. Then, finding the longest token in the vocabulary.
 
 ```python
 from sklearn.feature_extraction.text import CountVectorizer
 
-vect = CountVectorizer().fit(X_train)
-t = [len(w) for w in vect.get_feature_names()[:]] 
-vect.get_feature_names()[np.argmax(t)]
+def count_vectorizer():
+    vect = CountVectorizer().fit(X_train)
+    t = [len(w) for w in vect.get_feature_names()[:]] 
+    return(vect.get_feature_names()[np.argmax(t)])
+
+count_vectorizer()
 
 ```
+
+
+
+
+    'com1win150ppmx3age16subscription'
+
+
+
 
 Fitting and transforming the training data X_train using a Count Vectorizer with default parameters. Then, fitting a multinomial Naive Bayes classifier model with smoothing alpha=0.1. Finally, finding the area under the curve (AUC) score using the transformed test data.
 
@@ -49,71 +146,148 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import roc_auc_score
 
 ```python
-vect = CountVectorizer().fit(X_train)
-x_train_vectorized = vect.transform(X_train)
-classify = MultinomialNB(alpha=0.1)
-classify.fit(x_train_vectorized, y_train)
-predicted_lables = classify.predict(vect.transform(X_test))    
-roc_auc_score(y_test,predicted_lables)
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import roc_auc_score
+
+def multinomial_naive_bayes_classifier():
+    vect = CountVectorizer().fit(X_train)
+    x_train_vectorized = vect.transform(X_train)
+    classify = MultinomialNB(alpha=0.1)
+    classify.fit(x_train_vectorized, y_train)
+    predicted_lables = classify.predict(vect.transform(X_test))    
+    return (roc_auc_score(y_test,predicted_lables))
+
+multinomial_Naive_Bayes_classifier()
 
 ```
+
+
+
+
+    0.9720812182741116
+
+
 
 Fitting and transforming the training data X_train using a Tfidf Vectorizer with default parameters. Then, finding the 20 features which have the smallest tf-idf and 20 features which have the largest tf-idf. Then, the features are sorted in a two series where each series is sorted by tf-idf value and then alphabetically by feature name. The index of the series is the feature name, and the data is the tf-idf.
 
 ```python
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-vect = TfidfVectorizer().fit(X_train)
-features = np.array(vect.get_feature_names())
-X_train_vectorized = vect.transform(X_train)
-sorted_features = X_train_vectorized.max(0).toarray()[0].argsort()
-values = X_train_vectorized.max(0).toarray()[0]
-smalls  = pd.Series (values[sorted_features[:20]], index = features[sorted_features[:20]])
-larges  = pd.Series (values[sorted_features[:-21:-1]], index = features[sorted_features[:-21:-1]])
-smalls = smalls.reset_index()
-smalls = smalls.sort_values([0, 'index'])
-larges= larges.reset_index()
-larges = larges.sort_values([0, 'index'], ascending=[False, True])
-    
-(pd.Series(np.array (smalls[0]), index = np.array(smalls['index'])), 
-    pd.Series(np.array (larges[0]), index = np.array(larges['index'])))
+def small_large_tf_idf():
+    vect = TfidfVectorizer().fit(X_train)
+    features = np.array(vect.get_feature_names())
+    X_train_vectorized = vect.transform(X_train)
+    sorted_features = X_train_vectorized.max(0).toarray()[0].argsort()
+    values = X_train_vectorized.max(0).toarray()[0]
+    smalls  = pd.Series(values[sorted_features[:20]], index = features[sorted_features[:20]])
+    larges  = pd.Series(values[sorted_features[:-21:-1]], index = features[sorted_features[:-21:-1]])
+    smalls = smalls.reset_index()
+    smalls = smalls.sort_values([0, 'index'])
+    larges= larges.reset_index()
+    larges = larges.sort_values([0, 'index'], ascending=[False, True])
+    return (pd.Series(np.array (smalls[0]), index = np.array(smalls['index'])), 
+            pd.Series(np.array (larges[0]), index = np.array(larges['index'])))
+
+small_large_tf_idf()
 
 
 ```
+
+
+
+
+    (aaniye          0.074475
+     athletic        0.074475
+     chef            0.074475
+     companion       0.074475
+     courageous      0.074475
+     dependable      0.074475
+     determined      0.074475
+     exterminator    0.074475
+     healer          0.074475
+     listener        0.074475
+     organizer       0.074475
+     pest            0.074475
+     psychiatrist    0.074475
+     psychologist    0.074475
+     pudunga         0.074475
+     stylist         0.074475
+     sympathetic     0.074475
+     venaam          0.074475
+     diwali          0.091250
+     mornings        0.091250
+     dtype: float64,
+     146tf150p    1.000000
+     645          1.000000
+     anything     1.000000
+     anytime      1.000000
+     beerage      1.000000
+     done         1.000000
+     er           1.000000
+     havent       1.000000
+     home         1.000000
+     lei          1.000000
+     nite         1.000000
+     ok           1.000000
+     okie         1.000000
+     thank        1.000000
+     thanx        1.000000
+     too          1.000000
+     where        1.000000
+     yup          1.000000
+     tick         0.980166
+     blank        0.932702
+     dtype: float64)
+
+
+
 
 I use Tfidf Vectorizer to fit and transform the training data X_train. Tfidf Vectorizer ignors terms that have a document frequency strictly lower than 3. Then I fitted a multinomial Naive Bayes classifier model with smoothing alpha=0.1 and compute the area under the curve (AUC) score using the transformed test data.
 
 
 ```python
-vect = TfidfVectorizer(min_df=3).fit(X_train)
-X_train_vectorized = vect.transform(X_train)
-classifier = MultinomialNB(alpha=0.1)
-model = classifier.fit(X_train_vectorized, y_train)
-predicted_lables = model.predict(vect.transform(X_test))    
-    
-roc_auc_score(y_test,predicted_lables)
+def multinomial_naive_bayes_classifier():
+    vect = TfidfVectorizer(min_df=3).fit(X_train)
+    X_train_vectorized = vect.transform(X_train)
+    classifier = MultinomialNB(alpha=0.1)
+    model = classifier.fit(X_train_vectorized, y_train)
+    predicted_lables = model.predict(vect.transform(X_test))    
+    return (roc_auc_score(y_test,predicted_lables))
+
+multinomial_Naive_Bayes_classifier()
 
 
 ```
+
+
+
+
+    0.9416243654822335
+
+
 
 Comparing the average length of documents (number of characters) for not spam and spam documents, to find some insightful new features. 
 
 ```python
-spams= spam_data[spam_data['target']== 1]
-normal = spam_data[spam_data['target']== 0]    
-(np.array([len(w) for w in normal['text']]).mean(), np.array([len(w) for w in spams['text']]).mean())
+def length_of_emails():
+    spams= spam_data[spam_data['target']== 1]
+    normal = spam_data[spam_data['target']== 0]    
+    return (np.array([len(w) for w in normal['text']]).mean(), np.array([len(w) for w in spams['text']]).mean())
 
-
+length_of_emails()
 ```
 
-The following function has been provided to combine new features into the training data:
+
+
+    (71.02362694300518, 138.8661311914324)
+
+
+
+
+This function combines new features into the training data:
 
 ```python
 def add_feature(X, feature_to_add):
-    """
-    Returns sparse feature matrix with added feature.
-    feature_to_add can also be a list of features.
-    """
     from scipy.sparse import csr_matrix, hstack
     return hstack([X, csr_matrix(feature_to_add).T], 'csr')
 
