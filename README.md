@@ -18,19 +18,6 @@ spam_data = read_data()
 spam_data.head(10)
 ```
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -272,7 +259,8 @@ Comparing the average length of documents (number of characters) for not spam an
 def length_of_emails():
     spams= spam_data[spam_data['target']== 1]
     normal = spam_data[spam_data['target']== 0]    
-    return (np.array([len(w) for w in normal['text']]).mean(), np.array([len(w) for w in spams['text']]).mean())
+    return (np.array([len(w) for w in normal['text']]).mean(), 
+		np.array([len(w) for w in spams['text']]).mean())
 
 length_of_emails()
 ```
@@ -297,27 +285,43 @@ I use a Tfidf Vectorizer to fit and transform the training data X_train. Tfidf V
 ```python
 from sklearn.svm import SVC
 
-vect = TfidfVectorizer(min_df=5).fit(X_train)
-X_train_vectorized = vect.transform(X_train)
-X_train_new_feature = add_feature(X_train_vectorized, X_train.str.len())
-classifier = SVC(C=10000)
-model = classifier.fit(X_train_new_feature, y_train)
+def sv_classifier():
+    vect = TfidfVectorizer(min_df=5).fit(X_train)
+    X_train_vectorized = vect.transform(X_train)
+    X_train_new_feature = add_feature(X_train_vectorized, X_train.str.len())
+    classifier = SVC(C=10000)
+    model = classifier.fit(X_train_new_feature, y_train)
+    X_test_vectorized = vect.transform(X_test)
+    predicted_lables = model.predict(add_feature(X_test_vectorized, X_test.str.len()))    
+    return (roc_auc_score(y_test,predicted_lables))
 
-X_test_vectorized = vect.transform(X_test)
-predicted_lables = model.predict(add_feature(X_test_vectorized, X_test.str.len()))    
-roc_auc_score(y_test,predicted_lables)
-
+SV_Classifier()
 ```
+
+
+
+    0.9661689557407943
+
+
+
 Comparing the average number of digits per document for not spam and spam documents, to find some insightful new features. 
 
 ```python
-spams = spam_data[spam_data['target']== 1]
-normal = spam_data[spam_data['target']== 0]    
-    
-(np.array([sum(c.isdigit() for c in document) for document in normal['text']]).mean(), 
-        np.array([sum(c.isdigit() for c in document) for document in spams['text']]).mean()) 
+def count_digits():
+    spams = spam_data[spam_data['target']== 1]
+    normal = spam_data[spam_data['target']== 0]    
+    return(np.array([sum(c.isdigit() for c in document) for document in normal['text']]).mean(), 
+            np.array([sum(c.isdigit() for c in document) for document in spams['text']]).mean()) 
+
+count_digits()
 
 ```
+
+
+
+    (0.2992746113989637, 15.759036144578314)
+
+
 
 I fit and transform the training data X_train using a Tfidf Vectorizer. The Tfidf Vectorizer ignores terms that have a document frequency strictly lower than 5 and using word n-grams from n=1 to n=3 (unigrams, bigrams, and trigrams). I also added two new features to document-term matrix:
 
@@ -329,36 +333,52 @@ Then, I fit a Logistic Regression model with regularization C=100 and compute th
 ```python
 from sklearn.linear_model import LogisticRegression
 
-vect = TfidfVectorizer(min_df=5, ngram_range=(1,3)).fit(X_train)
-X_train_vectorized = vect.transform(X_train)
-X_train_new_feature = add_feature(X_train_vectorized, X_train.str.len())
-X_train_new_feature = add_feature(X_train_new_feature, 
-                                  [sum(c.isdigit() for c in document) for document in X_train])
+def logistic_regression_model():
+    vect = TfidfVectorizer(min_df=5, ngram_range=(1,3)).fit(X_train)
+    X_train_vectorized = vect.transform(X_train)
+    X_train_new_feature = add_feature(X_train_vectorized, X_train.str.len())
+    X_train_new_feature = add_feature(X_train_new_feature, 
+                                      [sum(c.isdigit() for c in document) for document in X_train])
 
-X_test_vectorized = vect.transform(X_test)
-X_test_new_feature = add_feature(X_test_vectorized, X_test.str.len())
-X_test_new_feature = add_feature(X_test_new_feature, 
-                                  [sum(c.isdigit() for c in document) for document in X_test])
+    X_test_vectorized = vect.transform(X_test)
+    X_test_new_feature = add_feature(X_test_vectorized, X_test.str.len())
+    X_test_new_feature = add_feature(X_test_new_feature, 
+                                      [sum(c.isdigit() for c in document) for document in X_test])
 
-classifier = LogisticRegression(C=100)
-model = classifier.fit(X_train_new_feature, y_train)
-predicted_lables = model.predict(X_test_new_feature)    
-roc_auc_score(y_test,predicted_lables)
+    classifier = LogisticRegression(C=100)
+    model = classifier.fit(X_train_new_feature, y_train)
+    predicted_lables = model.predict(X_test_new_feature)
+    return roc_auc_score(y_test,predicted_lables)
+
+logistic_regression_model()
 
 ```
+
+
+
+    0.9809793219360643
+
+
+
 
 Calculating the average number of non-word characters (anything other than a letter, digit or underscore) per document for not spam and spam documents, to find some good new features. 
 
 ```python
 import re
 
-spams = spam_data[spam_data['target']== 1]
-normal = spam_data[spam_data['target']== 0]   
-(np.array([len(re.findall(r'\W', document)) for document in normal['text']]).mean(),
-         np.array([len(re.findall(r'\W', document)) for document in spams['text']]).mean())
+def count_non_word_characters():
+    spams = spam_data[spam_data['target']== 1]
+    normal = spam_data[spam_data['target']== 0]   
+    return (np.array([len(re.findall(r'\W', document)) for document in normal['text']]).mean(),
+             np.array([len(re.findall(r'\W', document)) for document in spams['text']]).mean())
 
-
+count_non_word_characters()
 ```
+
+
+    (17.29181347150259, 29.041499330655956)
+
+
 
 I use a Count Vectorizer to fit and transform the training data X_train. The Count Vectorizer ignores terms that have a document frequency strictly lower than 5 and using character n-grams from n=2 to n=5.
 
@@ -377,33 +397,64 @@ Finally, I list the 10 smallest and 10 largest coefficients from the model and r
 This code returns a tuple (AUC score as a float, smallest coefs list, largest coefs list).
 
 ```python
-vect = CountVectorizer(min_df=5, ngram_range=(2,5), analyzer= 'char_wb').fit(X_train)
+def logistic_regression_model_with_new_features():
 
-X_train_vectorized = vect.transform(X_train)
-X_train_new_feature = add_feature(X_train_vectorized, X_train.str.len())
-X_train_new_feature = add_feature(X_train_new_feature, 
-                                  [sum(c.isdigit() for c in document) for document in X_train])
-X_train_new_feature = add_feature(X_train_new_feature, 
-                                  [len(re.findall(r'\W', document)) for document in X_train])
+    vect = CountVectorizer(min_df=5, ngram_range=(2,5), analyzer= 'char_wb').fit(X_train)
 
-X_test_vectorized = vect.transform(X_test)
-X_test_new_feature = add_feature(X_test_vectorized, X_test.str.len())
-X_test_new_feature = add_feature(X_test_new_feature, 
-                                  [sum(c.isdigit() for c in document) for document in X_test])
-X_test_new_feature = add_feature(X_test_new_feature, 
-                                  [len(re.findall(r'\W', document)) for document in X_test])
+    X_train_vectorized = vect.transform(X_train)
+    X_train_new_feature = add_feature(X_train_vectorized, X_train.str.len())
+    X_train_new_feature = add_feature(X_train_new_feature, 
+                                      [sum(c.isdigit() for c in document) for document in X_train])
+    X_train_new_feature = add_feature(X_train_new_feature, 
+                                      [len(re.findall(r'\W', document)) for document in X_train])
 
-classifier = LogisticRegression(C=100)
-model = classifier.fit(X_train_new_feature, y_train)
+    X_test_vectorized = vect.transform(X_test)
+    X_test_new_feature = add_feature(X_test_vectorized, X_test.str.len())
+    X_test_new_feature = add_feature(X_test_new_feature, 
+                                      [sum(c.isdigit() for c in document) for document in X_test])
+    X_test_new_feature = add_feature(X_test_new_feature, 
+                                      [len(re.findall(r'\W', document)) for document in X_test])
 
-predicted_lables = model.predict(X_test_new_feature)    
+    classifier = LogisticRegression(C=100)
+    model = classifier.fit(X_train_new_feature, y_train)
+
+    predicted_lables = model.predict(X_test_new_feature)    
 
 
-t = classifier.coef_[0].argsort()
-feature_names = np.array(vect.get_feature_names())
+    t = classifier.coef_[0].argsort()
+    feature_names = np.array(vect.get_feature_names())
 
-(roc_auc_score(y_test,predicted_lables) ,
-     pd.Series([classifier.coef_[0][t[i]] for i in range (10)], index =[feature_names[t[i]] for i in range (10)]) ,
-     pd.Series([classifier.coef_[0][t[-i-1]] for i in range (10)], index =[feature_names[t[-i-2]] for i in range (10)])
-    )   
+    return(roc_auc_score(y_test,predicted_lables) ,
+         pd.Series([classifier.coef_[0][t[i]] for i in range (10)], index =[feature_names[t[i]] for i in range (10)]) ,
+         pd.Series([classifier.coef_[0][t[-i-1]] for i in range (10)], index =[feature_names[t[-i-2]] for i in range (10)]))
+
+logistic_regression_model_with_new_features()
 ```
+
+
+
+
+    (0.9813973821367333,
+     ..    -1.402994
+     .     -1.193330
+      i    -0.814611
+      go   -0.735056
+     ?     -0.702481
+      y    -0.700129
+     pe    -0.654794
+     go    -0.641916
+     ok    -0.625415
+     h     -0.621689
+     dtype: float64,
+     ne     1.496932
+     co     0.743346
+     ww     0.733806
+     ia     0.725823
+     xt     0.638074
+     ar     0.629191
+      ch    0.626510
+     mob    0.608400
+     uk     0.588745
+      a     0.560126
+     dtype: float64)
+
