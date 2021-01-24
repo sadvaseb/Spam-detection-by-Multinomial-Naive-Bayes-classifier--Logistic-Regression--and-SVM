@@ -1,13 +1,13 @@
 # Spam detection by Multinomial Naive Bayes classifier, Logistic Regression, and SVM
  This project develops some algorithms to identify spam emails from non-spam emails in a dataset. I use multiple models (e.i., Naive Bayes classifier, Logistic Regression, and SVM). I applied multiple feature engineering technics (e.g., Count Vectorizer, Tfidf Vectorizer, and adding document length, non-word characters, etc) to improve accuracy. The highest spam detection accuracy **(AUC=98%)** is achieved by a multi-feature Logistic Regression model.
 
-This project is part of Applied Data Science with Python Specialization program at the University of Michigan. The program available from [here](https://www.coursera.org/learn/python-text-mining) . This code is only uploaded for educational purposes and it should not be used for submitting any homework or assignment.
 
 I start with loading the dataset and dividing it to test and train datasets.
 
 ```python
 import pandas as pd
 import numpy as np
+
 
 def read_data():
     spam_data = pd.read_csv('spam.csv')
@@ -84,7 +84,6 @@ spam_data.head(10)
 
 ```python
 from sklearn.model_selection import train_test_split
-
 X_train, X_test, y_train, y_test = train_test_split(spam_data['text'], 
                                                     spam_data['target'], 
                                                     random_state=0)
@@ -98,11 +97,7 @@ spam_data['target'].mean()*100
 
 ```
 
-
-
-
     13.406317300789663
-
 
 
 Fitting the training data X_train using a Count Vectorizer with default parameters. Then, finding the longest token in the vocabulary.
@@ -119,12 +114,7 @@ count_vectorizer()
 
 ```
 
-
-
-
     'com1win150ppmx3age16subscription'
-
-
 
 
 Fitting and transforming the training data X_train using a Count Vectorizer with default parameters. Then, fitting a multinomial Naive Bayes classifier model with smoothing alpha=0.1. Finally, finding the area under the curve (AUC) score using the transformed test data.
@@ -149,8 +139,6 @@ multinomial_Naive_Bayes_classifier()
 ```
 
 
-
-
     0.9720812182741116
 
 
@@ -159,6 +147,7 @@ Fitting and transforming the training data X_train using a Tfidf Vectorizer with
 
 ```python
 from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 def small_large_tf_idf():
     vect = TfidfVectorizer().fit(X_train)
@@ -179,9 +168,6 @@ small_large_tf_idf()
 
 
 ```
-
-
-
 
     (aaniye          0.074475
      athletic        0.074475
@@ -227,8 +213,6 @@ small_large_tf_idf()
      dtype: float64)
 
 
-
-
 I use Tfidf Vectorizer to fit and transform the training data X_train. Tfidf Vectorizer ignors terms that have a document frequency strictly lower than 3. Then I fitted a multinomial Naive Bayes classifier model with smoothing alpha=0.1 and compute the area under the curve (AUC) score using the transformed test data.
 
 
@@ -246,9 +230,6 @@ multinomial_Naive_Bayes_classifier()
 
 ```
 
-
-
-
     0.9416243654822335
 
 
@@ -264,8 +245,6 @@ def length_of_emails():
 
 length_of_emails()
 ```
-
-
 
     (71.02362694300518, 138.8661311914324)
 
@@ -298,10 +277,7 @@ def sv_classifier():
 SV_Classifier()
 ```
 
-
-
     0.9661689557407943
-
 
 
 Comparing the average number of digits per document for not spam and spam documents, to find some insightful new features. 
@@ -316,8 +292,6 @@ def count_digits():
 count_digits()
 
 ```
-
-
 
     (0.2992746113989637, 15.759036144578314)
 
@@ -354,8 +328,6 @@ logistic_regression_model()
 
 ```
 
-
-
     0.9809793219360643
 
 
@@ -374,7 +346,6 @@ def count_non_word_characters():
 
 count_non_word_characters()
 ```
-
 
     (17.29181347150259, 29.041499330655956)
 
@@ -432,8 +403,6 @@ logistic_regression_model_with_new_features()
 ```
 
 
-
-
     (0.9813973821367333,
      ..    -1.402994
      .     -1.193330
@@ -458,3 +427,5 @@ logistic_regression_model_with_new_features()
       a     0.560126
      dtype: float64)
 
+
+This project is part of Applied Data Science with Python Specialization program at the University of Michigan. The program available from [here](https://www.coursera.org/learn/python-text-mining) . This code is only uploaded for educational purposes and it should not be used for submitting any homework or assignment.
